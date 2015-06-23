@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <script src="../webcomponentsjs/webcomponents-lite.js"></script>
+    <link rel="import" href="../cg-polymer-patches/cg-polymer-patches.html">
+    <link rel="import" href="cg-task-manager.html">
+</head>
+<body>
+
+<template is="dom-bind" id="sandbox">
+    <button on-tap="generateTask">generate task</button>
+    <cg-task-manager id="manager" loop-delay="1000" max-concurrent="3"></cg-task-manager>
+</template>
+
+<script>
+    window.addEventListener('WebComponentsReady', function() {
+        var sandbox =  document.querySelector("#sandbox");
+
+        var task = function(schedule) {
+            return function (task, a, b, c) {
+                var progress = 0;
+                console.log("interval", parseInt(schedule));
+                var interval = setInterval(function () {
+                    if (progress > 100 || task.canceled) {
+                        clearInterval(interval);
+                        if(!task.canceled) {
+                            if (Math.random() >= .2) {
+                                task.success(134);
+                            } else {
+                                task.error("wow");
+                            }
+                        }
+                        return;
+                    }
+                    task.progress(progress++);
+
+                }, parseInt(schedule));
+            }
+        };
+        sandbox.generateTask = function(){
+            sandbox.$.manager.schedule("Something important 1", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))});
+        }
+
+    });
+</script>
+</body>
+</html>

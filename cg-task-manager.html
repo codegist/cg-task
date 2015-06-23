@@ -1,0 +1,159 @@
+<link rel="import" href="../cg-behaviors/cg-base-behavior.html">
+<link rel="import" href="../iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../paper-styles/paper-styles.html">
+<link rel="import" href="../paper-tabs/paper-tabs.html">
+<link rel="import" href="../paper-tabs/paper-tab.html">
+<link rel="import" href="../paper-material/paper-material.html">
+<link rel="import" href="../iron-pages/iron-pages.html">
+<link rel="import" href="cg-task-manager-behavior.html">
+
+<dom-module id="cg-task-manager">
+    <style>
+        .tasks-wrapper .task {
+            margin:5px;
+            border-bottom: 1px solid gray;
+        }
+        .tasks-wrapper .count {
+            @apply(--layout-horizontal);
+            @apply(--layout-center);
+            @apply(--layout-center-justified);
+            @apply(--paper-font-button);
+
+            border-radius: 50%;
+            width:30px;
+            height:30px;
+            margin:5px;
+            color:white;
+        }
+        .tasks-wrapper .scheduled .count {
+            background-color:var(--paper-blue-200);
+        }
+        .tasks-wrapper .running .count {
+            background-color:var(--paper-blue-800);
+        }
+        .tasks-wrapper .completed .count {
+            background-color:var(--paper-green-800);
+        }
+        .tasks-wrapper .failed .count {
+            background-color:var(--paper-red-800);
+        }
+        .tasks-wrapper .canceled .count {
+            background-color:var(--paper-grey-800);
+        }
+    </style>
+    <template>
+        <div class="tasks-wrapper">
+            <paper-tabs selected="{{selected}}" noink no-slide>
+                <paper-tab class="scheduled">Scheduled <paper-material class="count" elevation="1">[[tasks.length]]</paper-material></paper-tab>
+                <paper-tab class="running">Running <paper-material class="count" elevation="1">[[runningTasks.length]]</paper-material></paper-tab>
+                <paper-tab class="completed">Completed <paper-material class="count" elevation="1">[[successTasks.length]]</paper-material></paper-tab>
+                <paper-tab class="failed">Failed <paper-material class="count" elevation="1">[[errorTasks.length]]</paper-material></paper-tab>
+                <paper-tab class="canceled">Canceled <paper-material class="count" elevation="1">[[canceledTasks.length]]</paper-material></paper-tab>
+            </paper-tabs>
+            <iron-pages selected="{{selected}}">
+                <div>
+                    <template is="dom-repeat" items="[[tasks]]">
+                        <div class="task">
+                            <span>item.id:</span><span>[[item._id]]</span><span>,&nbsp;</span>
+                            <span>item.info.desc:</span><span>[[item.info.desc]]</span><span>,&nbsp;</span>
+                            <span>item.info.progress:</span><span>[[item.info.progress]]</span><span>,&nbsp;</span>
+                            <span>item.info.finished:</span><span>[[item.info.finished]]</span><span>,&nbsp;</span>
+                            <span>item.info.success:</span><span>[[item.info.success]]</span><span>,&nbsp;</span>
+                            <span>item.info.canceled:</span><span>[[item.info.canceled]]</span><span>,&nbsp;</span>
+                            <span>item.info.error:</span><span>[[item.info.error]]</span><span>,&nbsp;</span>
+                            <span>item.info.data:</span><span>[[item.info.data]]</span><span>,&nbsp;</span>
+                            <button on-tap="doCancel">cancel</button>
+                        </div>
+                    </template>
+                </div>
+                <div>
+                    <template is="dom-repeat" items="[[runningTasks]]">
+                        <div class="task">
+                            <span>item.id:</span><span>[[item._id]]</span><span>,&nbsp;</span>
+                            <span>item.info.desc:</span><span>[[item.info.desc]]</span><span>,&nbsp;</span>
+                            <span>item.info.progress:</span><span>[[item.info.progress]]</span><span>,&nbsp;</span>
+                            <span>item.info.finished:</span><span>[[item.info.finished]]</span><span>,&nbsp;</span>
+                            <span>item.info.success:</span><span>[[item.info.success]]</span><span>,&nbsp;</span>
+                            <span>item.info.canceled:</span><span>[[item.info.canceled]]</span><span>,&nbsp;</span>
+                            <span>item.info.error:</span><span>[[item.info.error]]</span><span>,&nbsp;</span>
+                            <span>item.info.data:</span><span>[[item.info.data]]</span><span>,&nbsp;</span>
+                            <button on-tap="doCancel">cancel</button>
+                        </div>
+                    </template>
+                </div>
+                <div>
+                    <template is="dom-repeat" items="[[successTasks]]">
+                        <div class="task">
+                            <span>item.id:</span><span>[[item._id]]</span><span>,&nbsp;</span>
+                            <span>item.info.desc:</span><span>[[item.info.desc]]</span><span>,&nbsp;</span>
+                            <span>item.info.progress:</span><span>[[item.info.progress]]</span><span>,&nbsp;</span>
+                            <span>item.info.finished:</span><span>[[item.info.finished]]</span><span>,&nbsp;</span>
+                            <span>item.info.success:</span><span>[[item.info.success]]</span><span>,&nbsp;</span>
+                            <span>item.info.canceled:</span><span>[[item.info.canceled]]</span><span>,&nbsp;</span>
+                            <span>item.info.error:</span><span>[[item.info.error]]</span><span>,&nbsp;</span>
+                            <span>item.info.data:</span><span>[[item.info.data]]</span><span>,&nbsp;</span>
+                            <button on-tap="discard">discard</button>
+                        </div>
+                    </template>
+                </div>
+                <div>
+                    <template is="dom-repeat" items="[[errorTasks]]">
+                        <div class="task">
+                            <span>item.id:</span><span>[[item._id]]</span><span>,&nbsp;</span>
+                            <span>item.info.desc:</span><span>[[item.info.desc]]</span><span>,&nbsp;</span>
+                            <span>item.info.progress:</span><span>[[item.info.progress]]</span><span>,&nbsp;</span>
+                            <span>item.info.finished:</span><span>[[item.info.finished]]</span><span>,&nbsp;</span>
+                            <span>item.info.success:</span><span>[[item.info.success]]</span><span>,&nbsp;</span>
+                            <span>item.info.canceled:</span><span>[[item.info.canceled]]</span><span>,&nbsp;</span>
+                            <span>item.info.error:</span><span>[[item.info.error]]</span><span>,&nbsp;</span>
+                            <span>item.info.data:</span><span>[[item.info.data]]</span><span>,&nbsp;</span>
+                            <button on-tap="doRetryError">retry</button>
+                        </div>
+                    </template>
+                </div>
+                <div>
+                    <template is="dom-repeat" items="[[canceledTasks]]">
+                        <div class="task">
+                            <span>item.id:</span><span>[[item._id]]</span><span>,&nbsp;</span>
+                            <span>item.info.desc:</span><span>[[item.info.desc]]</span><span>,&nbsp;</span>
+                            <span>item.info.progress:</span><span>[[item.info.progress]]</span><span>,&nbsp;</span>
+                            <span>item.info.finished:</span><span>[[item.info.finished]]</span><span>,&nbsp;</span>
+                            <span>item.info.success:</span><span>[[item.info.success]]</span><span>,&nbsp;</span>
+                            <span>item.info.canceled:</span><span>[[item.info.canceled]]</span><span>,&nbsp;</span>
+                            <span>item.info.error:</span><span>[[item.info.error]]</span><span>,&nbsp;</span>
+                            <span>item.info.data:</span><span>[[item.info.data]]</span><span>,&nbsp;</span>
+                            <button on-tap="doRetryCanceled">retry</button>
+                        </div>
+                    </template>
+                </div>
+            </iron-pages>
+        </div>
+    </template>
+</dom-module>
+<script>
+    Polymer({
+        is:'cg-task-manager',
+        properties:{
+            tasks:Array,
+            runningTasks:Array,
+            selected:{
+                value:0
+            }
+        },
+        behaviors:[CG.BaseBehavior, CG.TaskManagerBehavior],
+
+        doRetryError:function(e){
+            this.retryError(this.get("model.item", e));
+        },
+        doRetryCanceled:function(e){
+            this.retryCanceled(this.get("model.item", e));
+        },
+        doCancel:function(e){
+            this.cancel(this.get("model.item", e));
+        },
+        discard:function(e){
+            this.discardSuccess(this.get("model.item", e));
+        }
+    });
+</script>

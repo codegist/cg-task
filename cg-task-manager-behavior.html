@@ -1,0 +1,190 @@
+<link rel="import" href="../cg-utils/cg.html">
+<link rel="import" href="../cg-behaviors/cg-base-behavior.html">
+
+<script>
+    var id = 0;
+    var Task = function(desc, jobFn, jobArgs, jobScope, callback){
+        this._id = id++;
+        this._desc = desc;
+        this._listeners = [];
+        this._jobFn = jobFn;
+        this._jobArgs = [this].concat(Array.prototype.slice.call(jobArgs || []));
+        this._jobScope = jobScope;
+        callback && this.addListener(callback);
+        this.reset();
+    };
+    Task.prototype = {
+        _id:null,
+        _jobFn:null,
+        _jobArgs:null,
+        _jobScope:null,
+        _listeners:null,
+        canceled:false,
+        info:null,
+        exec:function(callback){
+            var execCallback = function(event, data, task){
+                (event == "finished") &&  this._listeners.splice(this._listeners.indexOf(execCallback), 1);
+                callback(event, data, task);
+            }.bind(this);
+            this.addListener(execCallback);
+            this._on("start", {task:this});
+            this._jobFn.apply(this._jobScope, this._jobArgs);
+        },
+        cancel:function(){
+            this.canceled = true;
+            this._on("finished", {success:false, canceled:true});
+        },
+        progress:function(progress){
+            this._on("progress", {progress:progress});
+        },
+        success:function(data){
+            this._on("finished", {success:true, data:data});
+        },
+        error:function(error){
+            this._on("finished", {success:false, error:error});
+        },
+        _on:function(event, data){
+            for(var i = 0; i < this._listeners.length; i ++){
+                try {
+                    this._listeners[i](event, data, this);
+                }catch(e){}
+            }
+        },
+        addListener:function(callback){
+            this._listeners.push(callback);
+        },
+        reset:function(){
+            this.canceled = false;
+            this.info = {
+                desc : this._desc,
+                progress : 0,
+                finished : false,
+                success : false,
+                canceled : false,
+                data : null,
+                error : null,
+            };
+        },
+        toString:function(){
+            return "[Task@"+this._id+", desc:"+this.info.desc+"]";
+        }
+    };
+
+    var CGTaskManagerBehavior = {
+        properties:{
+            loopDelay:{
+                value:100
+            },
+            tasks:Array,
+            runningTasks:Array,
+            successTasks:Array,
+            errorTasks:Array,
+            canceledTasks:Array,
+            maxConcurrent:{
+                value:1
+            }
+        },
+        _tasksLoop:null,
+        ready:function(){
+            this.tasks = [];
+            this.runningTasks = [];
+            this.successTasks = [];
+            this.canceledTasks = [];
+            this.errorTasks = [];
+            this._tasksLoop = setInterval(this._taskLoop.bind(this), this.loopDelay);
+        },
+        _taskLoop:function(){
+            while(this.tasks.length > 0 && this.runningTasks.length < this.maxConcurrent){
+                var task = this.splice("tasks", 0, 1)[0];
+                if(task.canceled) {
+                    this.push("canceledTasks", task);
+                }
+                this.push("runningTasks", task);
+                console.log(this.toString(), "Running task", task.toString());
+                task.exec(function(event, data, task){
+                    switch(event){
+                        case "finished":
+                            console.log(this.toString(), "Task finished", task.toString());
+                            this.splice("runningTasks", this.runningTasks.indexOf(task), 1);
+                            task.info.finished = true;
+                            task.info.success = data.success;
+                            task.info.canceled = data.canceled;
+                            task.info.data = data.data;
+                            task.info.error = data.error;
+                            if(data.success) {
+                                this.push("successTasks", task);
+                            }else if(data.canceled){
+                                this.push("canceledTasks", task);
+                            }else {
+                                this.push("errorTasks", task);
+                            }
+                            break;
+                        case "progress":
+                            console.log(this.toString(), "Task progress", task.toString(), "data", JSON.stringify(data));
+                            this.set("runningTasks." + this.runningTasks.indexOf(task) + ".info.progress", data.progress);
+                            break;
+                    }
+                }.bind(this));
+            }
+        },
+        scheduleTask:function(task){
+            task.reset();
+            console.log(this.toString(), "Scheduling task", task.toString());
+            this.push("tasks", task);
+        },
+        schedule:function(desc, jobFn, jobArgs, jobScope, callback){
+            return this.scheduleTask(new Task(desc, jobFn, jobArgs, jobScope, callback));
+        },
+        cancel:function(task){
+            var scheduled = this.get("tasks." + this.tasks.indexOf(task));
+            var running = this.get("runningTasks." + this.runningTasks.indexOf(task));
+            var success = this.get("successTasks." + this.successTasks.indexOf(task));
+            var error = this.get("errorTasks." + this.errorTasks.indexOf(task));
+
+            scheduled && scheduled.cancel();
+            running && running.cancel();
+            success && success.cancel();
+            error && error.cancel();
+            if(scheduled) {
+                var task = this.splice("tasks", 0, 1)[0];
+                this.push("canceledTasks", task);
+            }
+        },
+        discardSuccess:function(task){
+            if(task) {
+                var i = this.successTasks.indexOf(task);
+                if (i == -1) return;
+                this.splice("successTasks", i, 1);
+            }else{
+                this.splice("successTasks", 0, this.successTasks.length);
+            }
+        },
+        retryError:function(task){
+            if(task) {
+                var i = this.errorTasks.indexOf(task);
+                if (i == -1) return;
+                this.splice("errorTasks", i, 1);
+                this.scheduleTask(task);
+            }else{
+                var errors = this.splice("errorTasks", 0, this.errorTasks.length);
+                errors.forEach(function(error){
+                    this.scheduleTask(error);
+                }, this);
+            }
+        },
+        retryCanceled:function(task){
+            if(task) {
+                var i = this.canceledTasks.indexOf(task);
+                if (i == -1) return;
+                this.splice("canceledTasks", i, 1);
+                this.scheduleTask(task);
+            }else{
+                var canceled = this.splice("canceledTasks", 0, this.canceledTasks.length);
+                canceled.forEach(function(error){
+                    this.scheduleTask(error);
+                }, this);
+            }
+        }
+    };
+    CG.TaskManagerBehavior = [CG.BaseBehavior, CGTaskManagerBehavior];
+</script>
