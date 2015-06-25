@@ -3,18 +3,14 @@
 <link rel="import" href="../paper-styles/paper-styles.html">
 <link rel="import" href="../paper-button/paper-button.html">
 <link rel="import" href="../paper-material/paper-material.html">
-<link rel="import" href="../paper-dialog/paper-dialog.html">
 <link rel="import" href="../iron-icon/iron-icon.html">
 <link rel="import" href="../iron-icons/iron-icons.html">
-<link rel="import" href="cg-task-manager-base.html">
+<link rel="import" href="cg-task-manager-behavior.html">
 
 <link rel="stylesheet" href="../csshake/csshake.min.css" media="all">
 
-<dom-module id="cg-task-manager">
+<dom-module id="cg-task-manager-notification">
     <style>
-        #dialog {
-            overflow:inherit;
-        }
         #notifier {
             @apply(--layout-horizontal);
         }
@@ -50,26 +46,7 @@
         }
     </style>
     <template>
-        <paper-dialog modal id="dialog">
-            <h2>Background tasks</h2>
-            <div>
-                <cg-task-manager-base id="manager" loop-delay="500" max-concurrent="2"
-                                 tasks="{{tasks}}"
-                                 running-tasks="{{runningTasks}}"
-                                 success-tasks="{{successTasks}}"
-                                 error-tasks="{{errorTasks}}"
-                                 canceled-tasks="{{canceledTasks}}"
-                        ></cg-task-manager-base>
-            </div>
-            <div class="buttons">
-                <paper-button dialog-dismiss>
-                    <iron-icon icon="clear"></iron-icon>
-                    background
-                </paper-button>
-            </div>
-        </paper-dialog>
-
-        <paper-button id="notifier" on-tap="open" class="hover-stop">
+        <paper-button id="notifier" on-tap="animate" class="shake shake-little shake-constant hover-stop">
             <div class="count-wrap scheduled"><paper-material class="count" elevation="1">[[tasks.length]]</paper-material></div>
             <div class="count-wrap running"><paper-material class="count" elevation="1">[[runningTasks.length]]</paper-material></div>
             <div class="count-wrap success"><paper-material class="count" elevation="1">[[successTasks.length]]</paper-material></div>
@@ -79,41 +56,8 @@
     </template>
     <script>
         Polymer({
-            is:"cg-task-manager",
-            properties:{
-                tasks:{
-                    value:[]
-                },
-                runningTasks:{
-                    value:[]
-                },
-                successTasks:{
-                    value:[]
-                },
-                errorTasks:{
-                    value:[]
-                },
-                canceledTasks:{
-                    value:[]
-                },
-            },
-            behaviors:[CG.BaseBehavior],
-            observers:[
-                "_onAdded(tasks.splices)"
-            ],
-            open:function(){
-                this.$.dialog.open();
-            },
-            _onAdded:function(change){
-                if(this.get("indexSplices.0.addedCount", change) > 0) {
-                    this.$.notifier.classList.add("shake");
-                    this.$.notifier.classList.add("shake-constant");
-                    this.async(function(){
-                        this.$.notifier.classList.remove("shake");
-                        this.$.notifier.classList.remove("shake-constant");
-                    }, 2000);
-                }
-            }
+            is:"cg-task-manager-notification",
+            behaviors:[CG.BaseBehavior, CG.TaskManagerBehavior],
         });
     </script>
 </dom-module>
