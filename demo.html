@@ -58,9 +58,9 @@
                 dependsOn = tasks[parseInt(Math.random() * tasks.length)];
             }
 
-            sandbox.$.dialog.$.manager.schedule("Something important "+tasks.length, task(20 + Math.random()*50), [1,2,4], window, function(event, data){
+            sandbox.$.dialog.fireTasksEvent("schedule-task", new Task("Something important "+tasks.length, task(20 + Math.random()*50), [1,2,4], window, function(event, data){
             //    console.log("MyCallback1", event, "data", JSON.stringify(data))
-            }, dependsOn);
+            }, dependsOn));
         };
 
 //        var t1 = new Task("Something important 1", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))});

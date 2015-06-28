@@ -1,75 +1,9 @@
 <link rel="import" href="../cg-utils/cg-utils.html">
 <link rel="import" href="../cg-behaviors/cg-base-behavior.html">
 <link rel="import" href="../cg-behaviors/cg-document-event-behavior.html">
+<link rel="import" href="cg-task-scripts.html">
 
 <script>
-    var Task = function(desc, jobFn, jobArgs, jobScope, callback, dependsOn){
-        this._id = CG.Utils.Generators.id();
-        this._desc = desc;
-        this._listeners = [];
-        this._jobFn = jobFn;
-        this._jobArgs = [this].concat(Array.prototype.slice.call(jobArgs || []));
-        this._jobScope = jobScope;
-        callback && this.addListener(callback);
-        this.dependsOn = dependsOn;
-        this.reset();
-    };
-    Task.prototype = {
-        _id:null,
-        dependsOn:null,
-        _jobFn:null,
-        _jobArgs:null,
-        _jobScope:null,
-        _listeners:null,
-        info:null,
-        exec:function(callback){
-            var execCallback = function(event, data, task){
-                (event == "finished") &&  this._listeners.splice(this._listeners.indexOf(execCallback), 1);
-                callback(event, data, task);
-            }.bind(this);
-            this.addListener(execCallback);
-            this._on("start", {task:this});
-            this._jobFn.apply(this._jobScope, this._jobArgs);
-        },
-        cancel:function(){
-            this.info.canceled = true;
-            this._on("finished", {success:false, canceled:true});
-        },
-        progress:function(progress){
-            this._on("progress", {progress:progress});
-        },
-        success:function(data){
-            this._on("finished", {success:true, data:data});
-        },
-        error:function(error){
-            this._on("finished", {success:false, error:error});
-        },
-        _on:function(event, data){
-            for(var i = 0; i < this._listeners.length; i ++){
-                try {
-                    this._listeners[i](event, data, this);
-                }catch(e){}
-            }
-        },
-        addListener:function(callback){
-            this._listeners.push(callback);
-        },
-        reset:function(){
-            this.info = {
-                desc : this._desc,
-                progress : 0,
-                finished : false,
-                success : false,
-                canceled : false,
-                data : null,
-                error : null,
-            };
-        },
-        toString:function(){
-            return "[Task@"+this._id+", desc:"+this.info.desc+"]";
-        }
-    };
-
     var Tasks = {
         scheduled:[],
         running:[],
@@ -126,9 +60,7 @@
         ],
         _tasksLoop:null,
         ready:function(){
-            if(!this.manager) {
-                this.listensTo("cg-tasks", this._onTasksChangeEvent);
-            }
+            this.listensTo("cg-tasks", this._onTasksChangeEvent);
             this.tasks = Tasks;
             if(this.manager) {
                 this._tasksLoop = setInterval(this._taskLoop.bind(this), this.loopDelay);
@@ -147,13 +79,25 @@
             return task;
         },
         _onTasksChangeEvent:function(type, event, e){
-            if(type != "changed") {
-                return this.onTasksEvent(type, event, e);
-            }
-            console.log(this.toString(), "_onTasksChangeEvent", event.params.path);
-            this.notifyPath(event.params.path, event.params.value);
-            if(event.params.path.indexOf(".length") != -1) {
-                this.onTaskSizeChanged(this.tasks, event.params.path);
+            switch(type) {
+                case "changed":
+                    console.log(this.toString(), "_onTasksChangeEvent", event.params.path);
+                    this.notifyPath(event.params.path, event.params.value);
+                    if(event.params.path.indexOf(".length") != -1) {
+                        this.onTaskSizeChanged(this.tasks, event.params.path);
+                    }
+                    break;
+                case "schedule-task":
+                    this.manager && this.scheduleTask(event.params);
+                    break;
+                case "schedule-tasks":
+                    this.manager && event.params.forEach(function(task){
+                        this.scheduleTask(task)
+                    }, this);
+                    break;
+                default:
+                    this.onTasksEvent(type, event, e);
+                    break;
             }
         },
         onTasksEvent:function(type, event, e){},

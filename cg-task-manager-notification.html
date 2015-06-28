@@ -6,8 +6,8 @@
 <link rel="import" href="../iron-icon/iron-icon.html">
 <link rel="import" href="../iron-icons/iron-icons.html">
 <link rel="import" href="cg-task-manager-behavior.html">
+<link rel="import" href="cg-task-scripts.html">
 
-<link rel="stylesheet" href="../csshake/csshake.min.css" media="all">
 
 <dom-module id="cg-task-manager-notification">
     <style>
@@ -26,9 +26,13 @@
             background-color: white;
             text-transform: none;
         }
+        #notifier .label,
         #notifier .count-wrap {
             margin:5px;
             display:inline-block;
+        }
+        #notifier .label {
+            color:var(--primary-text-color);
         }
         #notifier .count {
             @apply(--layout-horizontal);
@@ -60,7 +64,7 @@
     <template>
         <paper-button id="notifier" on-tap="open" class="hover-stop shake-constant">
             <paper-material elevation="1" class="counts-wrap">
-                <span>Background tasks</span>
+                <span class="label">Background tasks</span>
                 <div class="count-wrap scheduled" title="Scheduled"><paper-material class="count" elevation="1">[[tasks.scheduled.length]]</paper-material></div>
                 <div class="count-wrap running" title="Running"><paper-material class="count" elevation="1">[[tasks.running.length]]</paper-material></div>
                 <div class="count-wrap success" title="Success"><paper-material class="count" elevation="1">[[tasks.success.length]]</paper-material></div>
