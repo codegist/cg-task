@@ -1,0 +1,42 @@
+<link rel="import" href="../cg-behaviors/cg-base-behavior.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-dialog/paper-dialog.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="cg-task-manager.html">
+
+<dom-module id="cg-task-manager-dialog">
+    <style>
+        #dialog {
+            overflow:inherit;
+        }
+    </style>
+    <template>
+        <paper-dialog modal id="dialog">
+            <h2>Background tasks</h2>
+            <div>
+                <cg-task-manager id="manager" loop-delay="500" max-concurrent="2"></cg-task-manager>
+            </div>
+            <div class="buttons">
+                <paper-button dialog-dismiss>
+                    <iron-icon icon="clear"></iron-icon>
+                    background
+                </paper-button>
+            </div>
+        </paper-dialog>
+    </template>
+    <script>
+        Polymer({
+            is:"cg-task-manager-dialog",
+            behaviors:[CG.BaseBehavior, CG.TaskManagerBehavior],
+            open:function(){
+                this.$.dialog.open();
+            },
+            onTasksEvent:function(type){
+                if(type == "open-viewer") {
+                    this.open();
+                }
+            }
+        });
+    </script>
+</dom-module>

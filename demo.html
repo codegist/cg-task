@@ -4,17 +4,26 @@
     <meta name="viewport" content="width=device-width, user-scalable=no">
     <script src="../webcomponentsjs/webcomponents-lite.js"></script>
     <link rel="import" href="../cg-polymer-patches/cg-polymer-patches.html">
-    <link rel="import" href="cg-task-manager.html">
-    <!--<link rel="import" href="cg-task-manager-notification.html">-->
+    <link rel="import" href="cg-task-manager-dialog.html">
+    <link rel="import" href="cg-task-manager-notification.html">
 </head>
 <body>
 
 <template is="dom-bind" id="sandbox">
     <button on-tap="generateTask">generate task</button>
-    <cg-task-manager id="dialog"></cg-task-manager>
+    <button on-tap="openDialog">open dialog</button>
+    <cg-task-manager-dialog id="dialog"></cg-task-manager-dialog>
+    <cg-task-manager-notification id="sdialog"></cg-task-manager-notification>
+    <cg-task-manager-notification id="sdialog"></cg-task-manager-notification>
+    <cg-task-manager-notification id="sdialog"></cg-task-manager-notification>
+    <cg-task-manager-notification id="sdialog"></cg-task-manager-notification>
+    <cg-task-manager-notification id="sdialog"></cg-task-manager-notification>
+    <cg-task-manager-notification id="sdialog"></cg-task-manager-notification>
+    <cg-task-manager-notification id="sdialog"></cg-task-manager-notification>
 </template>
 
 <script>
+//    console.log = function(){}
     window.addEventListener('WebComponentsReady', function() {
         var sandbox =  document.querySelector("#sandbox");
 
@@ -49,21 +58,30 @@
                 dependsOn = tasks[parseInt(Math.random() * tasks.length)];
             }
 
-            sandbox.$.dialog.$.manager.schedule("Something important "+tasks.length, task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, dependsOn);
+            sandbox.$.dialog.$.manager.schedule("Something important "+tasks.length, task(20 + Math.random()*50), [1,2,4], window, function(event, data){
+            //    console.log("MyCallback1", event, "data", JSON.stringify(data))
+            }, dependsOn);
         };
 
-        var t1 = new Task("Something important 1", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))});
-        var t2 = new Task("Something important 2", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t1);
-        var t3 = new Task("Something important 3", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t2);
-        var t41 = new Task("Something important 4", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t3);
-        var t42 = new Task("Something important 4", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t3);
-        var t43 = new Task("Something important 4", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t3);
-        sandbox.$.dialog.$.manager.scheduleTask(t1);
-        sandbox.$.dialog.$.manager.scheduleTask(t2);
-        sandbox.$.dialog.$.manager.scheduleTask(t3);
-        sandbox.$.dialog.$.manager.scheduleTask(t41);
-        sandbox.$.dialog.$.manager.scheduleTask(t42);
-        sandbox.$.dialog.$.manager.scheduleTask(t43);
+//        var t1 = new Task("Something important 1", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))});
+//        var t2 = new Task("Something important 2", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t1);
+//        var t3 = new Task("Something important 3", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t2);
+//        var t41 = new Task("Something important 4", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t3);
+//        var t42 = new Task("Something important 4", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t3);
+//        var t43 = new Task("Something important 4", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t3);
+//        sandbox.$.dialog.$.manager.scheduleTask(t1);
+//        sandbox.$.dialog.$.manager.scheduleTask(t2);
+//        sandbox.$.dialog.$.manager.scheduleTask(t3);
+//        sandbox.$.dialog.$.manager.scheduleTask(t41);
+//        sandbox.$.dialog.$.manager.scheduleTask(t42);
+//        sandbox.$.dialog.$.manager.scheduleTask(t43);
+
+//        sandbox.$.dialog.scheduleTask(t1);
+//        sandbox.$.dialog.scheduleTask(t2);
+//        sandbox.$.dialog.scheduleTask(t3);
+//        sandbox.$.dialog.scheduleTask(t41);
+//        sandbox.$.dialog.scheduleTask(t42);
+//        sandbox.$.dialog.scheduleTask(t43);
 
     });
 </script>

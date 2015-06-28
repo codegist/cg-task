@@ -11,8 +11,20 @@
 
 <dom-module id="cg-task-manager-notification">
     <style>
-        #notifier {
+        :host(.hidden) {
+            visibility:hidden;
+            display: none;
+        }
+        #notifier{
+            @apply(--paper-font-caption);
+        }
+        #notifier .counts-wrap {
             @apply(--layout-horizontal);
+            @apply(--layout-center);
+            border-radius: 5px;
+            padding:2px;
+            background-color: white;
+            text-transform: none;
         }
         #notifier .count-wrap {
             margin:5px;
@@ -22,11 +34,11 @@
             @apply(--layout-horizontal);
             @apply(--layout-center);
             @apply(--layout-center-justified);
-            @apply(--paper-font-button);
+            @apply(--paper-font-caption);
 
             border-radius: 50%;
-            width:30px;
-            height:30px;
+            width:20px;
+            height:20px;
             color:white;
         }
         #notifier .scheduled .count {
@@ -46,18 +58,44 @@
         }
     </style>
     <template>
-        <paper-button id="notifier" on-tap="animate" class="shake shake-little shake-constant hover-stop">
-            <div class="count-wrap scheduled"><paper-material class="count" elevation="1">[[tasks.length]]</paper-material></div>
-            <div class="count-wrap running"><paper-material class="count" elevation="1">[[runningTasks.length]]</paper-material></div>
-            <div class="count-wrap success"><paper-material class="count" elevation="1">[[successTasks.length]]</paper-material></div>
-            <div class="count-wrap failed"><paper-material class="count" elevation="1">[[errorTasks.length]]</paper-material></div>
-            <div class="count-wrap canceled"><paper-material class="count" elevation="1">[[canceledTasks.length]]</paper-material></div>
+        <paper-button id="notifier" on-tap="open" class="hover-stop shake-constant">
+            <paper-material elevation="1" class="counts-wrap">
+                <span>Background tasks</span>
+                <div class="count-wrap scheduled" title="Scheduled"><paper-material class="count" elevation="1">[[tasks.scheduled.length]]</paper-material></div>
+                <div class="count-wrap running" title="Running"><paper-material class="count" elevation="1">[[tasks.running.length]]</paper-material></div>
+                <div class="count-wrap success" title="Success"><paper-material class="count" elevation="1">[[tasks.success.length]]</paper-material></div>
+                <div class="count-wrap failed" title="Failed"><paper-material class="count" elevation="1">[[tasks.error.length]]</paper-material></div>
+                <div class="count-wrap canceled" title="Canceled"><paper-material class="count" elevation="1">[[tasks.canceled.length]]</paper-material></div>
+            </paper-material>
         </paper-button>
     </template>
     <script>
         Polymer({
             is:"cg-task-manager-notification",
             behaviors:[CG.BaseBehavior, CG.TaskManagerBehavior],
+            ready:function(){
+                this.toggleClass("hidden", true);
+            },
+            onTaskSizeChanged:function(tasks){
+                var visible = tasks.scheduled.length != 0
+                        || tasks.running.length != 0
+                        || tasks.error.length != 0
+                        || tasks.canceled.length != 0;
+                if(visible) {
+                    if(!this.$.notifier.classList.contains("shake")) {
+                        this.toggleClass("hidden", false);
+                        this.$.notifier.classList.add("shake");
+                        this.async(function () {
+                            this.$.notifier.classList.remove("shake");
+                        }, 1000);
+                    }
+                }else{
+                    this.toggleClass("hidden", true);
+                }
+            },
+            open:function(){
+                this.fireTasksEvent("open-viewer");
+            }
         });
     </script>
 </dom-module>
