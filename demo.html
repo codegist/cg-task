@@ -58,17 +58,17 @@
                 dependsOn = tasks[parseInt(Math.random() * tasks.length)];
             }
 
-            sandbox.$.dialog.fireTasksEvent("schedule-task", new Task("Something important "+tasks.length, task(20 + Math.random()*50), [1,2,4], window, function(event, data){
+            sandbox.$.dialog.fireTasksEvent("schedule-task", new CG.Task("Something important "+tasks.length, task(20 + Math.random()*50), [1,2,4], window, function(event, data){
             //    console.log("MyCallback1", event, "data", JSON.stringify(data))
             }, dependsOn));
         };
 
-//        var t1 = new Task("Something important 1", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))});
-//        var t2 = new Task("Something important 2", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t1);
-//        var t3 = new Task("Something important 3", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t2);
-//        var t41 = new Task("Something important 4", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t3);
-//        var t42 = new Task("Something important 4", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t3);
-//        var t43 = new Task("Something important 4", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t3);
+//        var t1 = new CG.Task("Something important 1", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))});
+//        var t2 = new CG.Task("Something important 2", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t1);
+//        var t3 = new CG.Task("Something important 3", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t2);
+//        var t41 = new CG.Task("Something important 4", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t3);
+//        var t42 = new CG.Task("Something important 4", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t3);
+//        var t43 = new CG.Task("Something important 4", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t3);
 //        sandbox.$.dialog.$.manager.scheduleTask(t1);
 //        sandbox.$.dialog.$.manager.scheduleTask(t2);
 //        sandbox.$.dialog.$.manager.scheduleTask(t3);

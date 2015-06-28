@@ -162,7 +162,7 @@
             return task;
         },
         schedule:function(desc, jobFn, jobArgs, jobScope, callback, dependsOn){
-            return this.scheduleTask(new Task(desc, jobFn, jobArgs, jobScope, callback, dependsOn));
+            return this.scheduleTask(new CG.Task(desc, jobFn, jobArgs, jobScope, callback, dependsOn));
         },
         cancel:function(task, type){
             task.cancel();

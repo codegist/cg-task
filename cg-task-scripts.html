@@ -1,6 +1,8 @@
+<link rel="import" href="../cg-utils/cg.html">
 <link rel="stylesheet" href="../csshake/csshake.min.css" media="all">
+
 <script>
-    var Task = function(desc, jobFn, jobArgs, jobScope, callback, dependsOn){
+    CG.Task = function(desc, jobFn, jobArgs, jobScope, callback, dependsOn){
         this._id = CG.Utils.Generators.id();
         this._desc = desc;
         this._listeners = [];
@@ -11,7 +13,7 @@
         this.dependsOn = dependsOn;
         this.reset();
     };
-    Task.prototype = {
+    CG.Task.prototype = {
         _id:null,
         dependsOn:null,
         _jobFn:null,
