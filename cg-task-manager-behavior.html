@@ -134,9 +134,9 @@
                             task.info.error = data.error || false;
                             if(data.success) {
                                 this.push("tasks.success", task);
-                            }else if(data.canceled){
-                                this.push("tasks.canceled", task);
-                            }else {
+//                            }else if(data.canceled){
+//                                this.push("tasks.canceled", task);
+                            }else if(!data.canceled){
                                 this.push("tasks.error", task);
                             }
                             break;
@@ -157,6 +157,7 @@
         },
         scheduleTask:function(task){
             task.reset();
+            task.setManager(this);
             console.log(this.toString(), "Scheduling task", task.toString());
             this.push("tasks.scheduled", task);
             return task;
@@ -165,23 +166,32 @@
             return this.scheduleTask(new CG.Task(desc, jobFn, jobArgs, jobScope, callback, dependsOn));
         },
         cancel:function(task, type){
-            task.cancel();
-            if(type == "scheduled") {
-                this.splice("tasks.scheduled", this.tasks.scheduled.indexOf(task), 1);
-                this.push("tasks.canceled", task);
-            }
+            var tasks = this._getTasksFor(type, task);
+            this.splice(tasks.name, tasks.value.indexOf(task), 1);
+            this.push("tasks.canceled", task);
         },
         discard:function(task, type){
-            var tasks = this._getTasksFor(type);
+            var tasks = this._getTasksFor(type, task);
             this.splice(tasks.name, tasks.value.indexOf(task), 1);
         },
         retry:function(task, type){
-            var tasks = this._getTasksFor(type);
+            var tasks = this._getTasksFor(type, task);
             this.splice(tasks.name, tasks.value.indexOf(task), 1);
             this.scheduleTask(task);
         },
-        _getTasksFor:function(type){
+        _getTasksFor:function(type, task){
+            return type ? this._getTasksForType(type) : this._getTasksByTask(task);
+        },
+        _getTasksForType:function(type){
             return this.tasksPerType[type];
+        },
+        _getTasksByTask:function(task){
+            for(var key in this.tasksPerType){
+                if(this.tasksPerType[key].value.indexOf(task) != -1) {
+                    return this.tasksPerType[key];
+                }
+            }
+            return null;
         },
     };
     CG.TaskManagerBehavior = [CG.BaseBehavior, CGTaskManagerBehavior, CG.DocumentEventBehavior];

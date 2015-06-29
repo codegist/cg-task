@@ -21,6 +21,7 @@
         _jobScope:null,
         _listeners:null,
         info:null,
+        _manager:null,
         exec:function(callback){
             var execCallback = function(event, data, task){
                 (event == "finished") &&  this._listeners.splice(this._listeners.indexOf(execCallback), 1);
@@ -34,9 +35,20 @@
                 this.error(e);
             }
         },
-        cancel:function(){
+        setManager:function(manager){
+            this._manager = manager;
+        },
+        retry:function(){
+            this._manager.retry(this);
+        },
+        discard:function(){
+            this._manager.discard(this);
+        },
+        cancel:function(discard){
+            this._manager.cancel(this);
             this.info.canceled = true;
             this._on("finished", {success:false, canceled:true});
+            discard && this.discard();
         },
         progress:function(progress){
             this._on("progress", {progress:progress});
