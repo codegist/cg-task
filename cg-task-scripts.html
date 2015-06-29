@@ -43,12 +43,12 @@
         },
         discard:function(){
             this._manager.discard(this);
+            this._on("finished", {success:false, discarded:true});
         },
         cancel:function(discard){
-            this._manager.cancel(this);
+            discard ? this.discard() : this._manager.cancel(this);
             this.info.canceled = true;
             this._on("finished", {success:false, canceled:true});
-            discard && this.discard();
         },
         progress:function(progress){
             this._on("progress", {progress:progress});
@@ -77,6 +77,7 @@
                 finished : false,
                 success : false,
                 canceled : false,
+                discarded: false,
                 data : null,
                 error : null,
             };

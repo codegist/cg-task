@@ -131,20 +131,13 @@
                 return Math.round(progress) + "%";
             },
             retry:function(e){
-                 this._action("retry", e.model.item);
+                 e.model.item.retry();
             },
             discard:function(e){
-                 this._action("discard", e.model.item);
+                e.model.item.discard();
             },
             cancel:function(e){
-                 this._action("cancel", e.model.item);
-            },
-            _action:function(action, task){
-                 this.fire("action", {
-                     action: action,
-                     type: this.type,
-                     task: task
-                 });
+                e.model.item.cancel();
             }
         });
     </script>
@@ -225,18 +218,5 @@
             }
         },
         behaviors:[CG.BaseBehavior, CG.TaskManagerBehavior],
-        listeners:{
-            "action":"onAction"
-        },
-        onAction:function(e){
-            switch(e.detail.action) {
-                case "retry":
-                    return this.retry(e.detail.task, e.detail.type);
-                case "cancel":
-                    return this.cancel(e.detail.task, e.detail.type);
-                case "discard":
-                    return this.discard(e.detail.task, e.detail.type);
-            }
-        }
     });
 </script>

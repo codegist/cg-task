@@ -116,9 +116,10 @@
             while(this.tasks.scheduled.length > 0 && this.tasks.running.length < this.maxConcurrent){
                 var task = this._getNextRunnableTask();
                 if(!task) break;
-                this.splice("tasks.scheduled", this.tasks.scheduled.indexOf(task), 1);
+                this.arrayDelete("tasks.scheduled", task);
                 if(task.info.canceled) {
                     this.push("tasks.canceled", task);
+                    continue;
                 }
                 this.push("tasks.running", task);
                 console.log(this.toString(), "Running task", task.toString());
@@ -126,10 +127,11 @@
                     switch(event){
                         case "finished":
                             console.log(this.toString(), "Task finished", task.toString());
-                            this.splice("tasks.running", this.tasks.running.indexOf(task), 1);
+                            this.arrayDelete("tasks.running", task);
                             task.info.finished = true;
                             task.info.success = data.success || false;
                             task.info.canceled = data.canceled || false;
+                            task.info.discarded = data.discarded || false;
                             task.info.data = data.data;
                             task.info.error = data.error || false;
                             if(data.success) {
@@ -167,16 +169,16 @@
         },
         cancel:function(task, type){
             var tasks = this._getTasksFor(type, task);
-            this.splice(tasks.name, tasks.value.indexOf(task), 1);
+            this.arrayDelete(tasks.name, task);
             this.push("tasks.canceled", task);
         },
         discard:function(task, type){
             var tasks = this._getTasksFor(type, task);
-            this.splice(tasks.name, tasks.value.indexOf(task), 1);
+            this.arrayDelete(tasks.name, task);
         },
         retry:function(task, type){
             var tasks = this._getTasksFor(type, task);
-            this.splice(tasks.name, tasks.value.indexOf(task), 1);
+            this.arrayDelete(tasks.name, task);
             this.scheduleTask(task);
         },
         _getTasksFor:function(type, task){
