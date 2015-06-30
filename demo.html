@@ -21,19 +21,19 @@
 </template>
 
 <script>
-//    console.log = function(){}
+    console.log = function(){}
     window.addEventListener('WebComponentsReady', function() {
         var sandbox =  document.querySelector("#sandbox");
 
         var task = function(schedule) {
-            return function (task, a, b, c) {
+            return function (task) {
                 var progress = 0;
                 console.log("interval", parseInt(schedule));
                 var interval = setInterval(function () {
                     if (progress > 100 || task.state == "canceled") {
                         clearInterval(interval);
                         if(task.state != "canceled") {
-                            if (Math.random() >= .2) {
+                            if (Math.random() > .2) {
                                 task.success(134);
                             } else {
                                 task.fail("wow");
@@ -50,38 +50,17 @@
             sandbox.$.dialog.open()
         };
         sandbox.generateTask = function(){
-
-            var tasks = sandbox.$.manager.tasks, dependsOn;
+            var tasks = sandbox.$.manager.tasks;
+            var dependsOn;
             if(Math.random() < .5 && tasks.length > 0) {
                 dependsOn = tasks[parseInt(Math.random() * tasks.length)];
             }
 
-            sandbox.$.manager.scheduleTask(new CG.Task("Something important "+tasks.length, task(20 + Math.random()*50), [1,2,4], window, function(event, data){
-//            sandbox.$.dialog.fireTasksEvent("schedule-task", new CG.Task("Something important "+tasks.length, task(20 + Math.random()*50), [1,2,4], window, function(event, data){
-            //    console.log("MyCallback1", event, "data", JSON.stringify(data))
-            }, dependsOn));
+            Polymer.Base.fire("cg-tasks", {
+                type:"schedule-task",
+                params:new CG.Task("Something important "+tasks.length, task(20 + Math.random()*50), [1,2,4], window, function(event, data){}, dependsOn)
+            }, {node:document});
         };
-
-//        var t1 = new CG.Task("Something important 1", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))});
-//        var t2 = new CG.Task("Something important 2", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t1);
-//        var t3 = new CG.Task("Something important 3", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t2);
-//        var t41 = new CG.Task("Something important 4", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t3);
-//        var t42 = new CG.Task("Something important 4", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t3);
-//        var t43 = new CG.Task("Something important 4", task(20 + Math.random()*50), [1,2,4], window, function(event, data){console.log("MyCallback1", event, "data", JSON.stringify(data))}, t3);
-//        sandbox.$.dialog.$.manager.scheduleTask(t1);
-//        sandbox.$.dialog.$.manager.scheduleTask(t2);
-//        sandbox.$.dialog.$.manager.scheduleTask(t3);
-//        sandbox.$.dialog.$.manager.scheduleTask(t41);
-//        sandbox.$.dialog.$.manager.scheduleTask(t42);
-//        sandbox.$.dialog.$.manager.scheduleTask(t43);
-
-//        sandbox.$.dialog.scheduleTask(t1);
-//        sandbox.$.dialog.scheduleTask(t2);
-//        sandbox.$.dialog.scheduleTask(t3);
-//        sandbox.$.dialog.scheduleTask(t41);
-//        sandbox.$.dialog.scheduleTask(t42);
-//        sandbox.$.dialog.scheduleTask(t43);
-
     });
 </script>
 </body>

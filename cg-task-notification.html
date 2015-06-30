@@ -3,8 +3,6 @@
 <link rel="import" href="../paper-styles/paper-styles.html">
 <link rel="import" href="../paper-button/paper-button.html">
 <link rel="import" href="../paper-material/paper-material.html">
-<link rel="import" href="../iron-icon/iron-icon.html">
-<link rel="import" href="../iron-icons/iron-icons.html">
 <link rel="import" href="cg-task-listener-behavior.html">
 <link rel="import" href="cg-cssshake.html">
 
@@ -62,7 +60,7 @@
         }
     </style>
     <template>
-        <paper-button id="notifier" on-tap="open" class="hover-stop shake-constant">
+        <paper-button id="notifier" on-tap="open" class="hover-stop shake-constant shake-little">
             <paper-material elevation="1" class="counts-wrap">
                 <span class="label">Background tasks</span>
                 <div class="count-wrap scheduled" title="Scheduled"><paper-material class="count" elevation="1">[[scheduled.length]]</paper-material></div>

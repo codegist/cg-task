@@ -97,14 +97,8 @@
 
             _onTasksChangeEvent:function(type, event, e){
                 switch(type) {
-                    case "schedule-task":
-                        this.scheduleTask(event.params);
-                        break;
-                    case "schedule-tasks":
-                        event.params.forEach(function(task){
-                            this.scheduleTask(task)
-                        }, this);
-                        break;
+                    case "schedule-task":  return this.scheduleTask(event.params);
+                    case "schedule-tasks": return event.params.forEach(this.scheduleTask, this);
                 }
             },
             notifyTasksChanged:function(){
