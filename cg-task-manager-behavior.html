@@ -4,197 +4,116 @@
 <link rel="import" href="cg-task-scripts.html">
 
 <script>
-    var Tasks = {
-        scheduled:[],
-        running:[],
-        success:[],
-        error:[],
-        canceled:[],
-    };
+    (function(){
+        var tasks = [];
+        var stateFilter = function(state){return function(task){return task.state == state}};
 
-    var CGTaskManagerBehavior = {
-        properties:{
-            loopDelay:{
-                value:100
-            },
-            tasks:{
-                type:Object
-            },
-            manager:{
-                type:Boolean,
-                value:false
-            },
-            tasksPerType:{
-                type:Object,
-                value:function(){
-                    return {
-                        "scheduled":{
-                            value:Tasks.scheduled,
-                            name:"tasks.scheduled"
-                        },
-                        "running":{
-                            value:Tasks.running,
-                            name:"tasks.running"
-                        },
-                        "success":{
-                            value:Tasks.success,
-                            name:"tasks.success"
-                        },
-                        "canceled":{
-                            value:Tasks.canceled,
-                            name:"tasks.canceled"
-                        },
-                        "failed":{
-                            value:Tasks.error,
-                            name:"tasks.error"
-                        }
-                    }
+        var scheduledFilter = stateFilter("scheduled");
+        var runningFilter = stateFilter("running");
+        var successFilter = stateFilter("success");
+        var failedFilter = stateFilter("failed");
+        var canceledFilter = stateFilter("canceled");
+        var discardedFilter = stateFilter("discarded");
+        var runnableFilter = function(task) {
+            return (scheduledFilter(task)) && (!task.dependsOn || successFilter(task.dependsOn));
+        };
+
+        var scheduledTasks = function(){ return tasks.filter(scheduledFilter); };
+        var runnableTasks = function(){ return tasks.filter(runnableFilter); };
+        var runningTasks = function(){ return tasks.filter(runningFilter); };
+        var successTasks = function(){ return tasks.filter(successFilter); };
+        var failedTasks = function(){ return tasks.filter(failedFilter); };
+        var canceledTasks = function(){ return tasks.filter(canceledFilter); };
+        var discardedTasks = function(){ return tasks.filter(discardedFilter); };
+
+        var tasksAccessors = {
+            scheduled : scheduledTasks,
+            runnable : runnableTasks,
+            running : runningTasks,
+            success : successTasks,
+            failed : failedTasks,
+            canceled : canceledTasks,
+            discarded : discardedTasks
+        };
+
+        var CGTaskManagerBehavior = {
+            properties:{
+                tasks:Array,
+                loopDelay:{
+                    value:100
+                },
+                maxConcurrent:{
+                    value:2
                 }
             },
-            maxConcurrent:{
-                value:1
-            }
-        },
-        observers:[
-            "notifyTasksChanged(tasks.*)"
-        ],
-        _tasksLoop:null,
-        ready:function(){
-            this.listensTo("cg-tasks", this._onTasksChangeEvent);
-            this.tasks = Tasks;
-            if(this.manager) {
+            observers:[
+                "notifyTasksChanged(tasks.length)"
+            ],
+            _tasksLoop:null,
+            ready:function(){
+                this.listensTo("cg-tasks", this._onTasksChangeEvent);
+                this.tasks = tasks;
                 this._tasksLoop = setInterval(this._taskLoop.bind(this), this.loopDelay);
-            }
-        },
-        _getNextRunnableTask:function(){
-            var task = null;
-            var i = 0;
-            while(i < this.tasks.scheduled.length){
-                var t = this.tasks.scheduled[i++];
-                if(!t.dependsOn || t.dependsOn.info.success) {
-                    task = t;
-                    break;
-                }
-            }
-            return task;
-        },
-        _onTasksChangeEvent:function(type, event, e){
-            switch(type) {
-                case "changed":
-                    console.log(this.toString(), "_onTasksChangeEvent", event.params.path);
-                    this.notifyPath(event.params.path, event.params.value);
-                    if(event.params.path.indexOf(".length") != -1) {
-                        this.onTaskSizeChanged(this.tasks, event.params.path);
+            },
+            clearDiscarded:function(){
+                for (var i = this.tasks.length - 1; i >= 0; i--) {
+                    if(discardedFilter(this.tasks[i])) {
+                        this.splice("tasks", i, 1);
                     }
-                    break;
-                case "schedule-task":
-                    this.manager && this.scheduleTask(event.params);
-                    break;
-                case "schedule-tasks":
-                    this.manager && event.params.forEach(function(task){
-                        this.scheduleTask(task)
-                    }, this);
-                    break;
-                default:
-                    this.onTasksEvent(type, event, e);
-                    break;
-            }
-        },
-        onTasksEvent:function(type, event, e){},
-        onTaskSizeChanged:function(tasks, path){},
-        notifyTasksChanged:function(change){
-            if(!this.manager) return;
-            this.fireTasksEvent("changed", {
-                path: change.path,
-                value: change.value
-            }, this);
-        },
-        fireTasksEvent:function(type, payload){
-            this.fireDocument("cg-tasks", type, payload, this);
-        },
-        _taskLoop:function(){
-            while(this.tasks.scheduled.length > 0 && this.tasks.running.length < this.maxConcurrent){
-                var task = this._getNextRunnableTask();
-                if(!task) break;
-                this.arrayDelete("tasks.scheduled", task);
-                if(task.info.canceled) {
-                    this.push("tasks.canceled", task);
-                    continue;
                 }
-                this.push("tasks.running", task);
-                console.log(this.toString(), "Running task", task.toString());
-                task.exec(function(event, data, task){
-                    switch(event){
-                        case "finished":
-                            console.log(this.toString(), "Task finished", task.toString());
-                            this.arrayDelete("tasks.running", task);
-                            task.info.finished = true;
-                            task.info.success = data.success || false;
-                            task.info.canceled = data.canceled || false;
-                            task.info.discarded = data.discarded || false;
-                            task.info.data = data.data;
-                            task.info.error = data.error || false;
-                            if(data.success) {
-                                this.push("tasks.success", task);
-//                            }else if(data.canceled){
-//                                this.push("tasks.canceled", task);
-                            }else if(!data.canceled){
-                                this.push("tasks.error", task);
-                            }
-                            break;
-                        case "progress":
-                            //console.log(this.toString(), "Task progress", task.toString(), "data", JSON.stringify(data));
-                            this.set("tasks.running." + this.tasks.running.indexOf(task) + ".info.progress", data.progress);
-                            break;
-                    }
-                }.bind(this));
-            }
-        },
-        getTasks:function(){
-            return this.tasks.scheduled
-                    .concat(this.tasks.running)
-                    .concat(this.tasks.success)
-                    .concat(this.tasks.error)
-                    .concat(this.tasks.canceled);
-        },
-        scheduleTask:function(task){
-            task.reset();
-            task.setManager(this);
-            console.log(this.toString(), "Scheduling task", task.toString());
-            this.push("tasks.scheduled", task);
-            return task;
-        },
-        schedule:function(desc, jobFn, jobArgs, jobScope, callback, dependsOn){
-            return this.scheduleTask(new CG.Task(desc, jobFn, jobArgs, jobScope, callback, dependsOn));
-        },
-        cancel:function(task, type){
-            var tasks = this._getTasksFor(type, task);
-            this.arrayDelete(tasks.name, task);
-            this.push("tasks.canceled", task);
-        },
-        discard:function(task, type){
-            var tasks = this._getTasksFor(type, task);
-            this.arrayDelete(tasks.name, task);
-        },
-        retry:function(task, type){
-            var tasks = this._getTasksFor(type, task);
-            this.arrayDelete(tasks.name, task);
-            this.scheduleTask(task);
-        },
-        _getTasksFor:function(type, task){
-            return type ? this._getTasksForType(type) : this._getTasksByTask(task);
-        },
-        _getTasksForType:function(type){
-            return this.tasksPerType[type];
-        },
-        _getTasksByTask:function(task){
-            for(var key in this.tasksPerType){
-                if(this.tasksPerType[key].value.indexOf(task) != -1) {
-                    return this.tasksPerType[key];
+            },
+            _taskLoop:function(){
+                var runnable;
+                this.clearDiscarded();
+                while(runningTasks().length < this.maxConcurrent && (runnable = runnableTasks()).length > 0){
+                    var task = runnable[0];
+                    console.log(this.toString(), "Running task", task.toString());
+                    task.exec();
                 }
-            }
-            return null;
-        },
-    };
-    CG.TaskManagerBehavior = [CG.BaseBehavior, CGTaskManagerBehavior, CG.DocumentEventBehavior];
+            },
+            _onTaskEvent:function(event, data, task){
+                switch(event){
+                    case "start":
+                    case "retry":
+                    case "finished":
+                        return this.fireTasksEvent("state-changed", {task:task, state:data.state, accessors:tasksAccessors});
+                    case "progress":
+                        return this.fireTasksEvent("progress-changed", {task:task, progress:data.progress, accessors:tasksAccessors});
+                }
+            },
+            scheduleTask:function(task){
+                console.log(this.toString(), "Scheduling task", task.toString());
+                if(this.tasks.indexOf(tasks) == -1) {
+                    task.addListener(this._onTaskEvent.bind(this));
+                    this.push("tasks", task);
+                }else{
+                    task.reset();
+                }
+                return task;
+            },
+            schedule:function(desc, jobFn, jobArgs, jobScope, callback, dependsOn){
+                return this.scheduleTask(new CG.Task(desc, jobFn, jobArgs, jobScope, callback, dependsOn));
+            },
+
+            _onTasksChangeEvent:function(type, event, e){
+                switch(type) {
+                    case "schedule-task":
+                        this.scheduleTask(event.params);
+                        break;
+                    case "schedule-tasks":
+                        event.params.forEach(function(task){
+                            this.scheduleTask(task)
+                        }, this);
+                        break;
+                }
+            },
+            notifyTasksChanged:function(){
+                return this.fireTasksEvent("length-changed", {accessors:tasksAccessors});
+            },
+            fireTasksEvent:function(type, payload){
+                this.fireDocument("cg-tasks", type, payload, this);
+            },
+        };
+        CG.TaskManagerBehavior = [CG.BaseBehavior, CGTaskManagerBehavior, CG.DocumentEventBehavior];
+    })();
 </script>

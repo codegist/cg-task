@@ -5,11 +5,11 @@
 <link rel="import" href="../paper-material/paper-material.html">
 <link rel="import" href="../iron-icon/iron-icon.html">
 <link rel="import" href="../iron-icons/iron-icons.html">
-<link rel="import" href="cg-task-manager-behavior.html">
-<link rel="import" href="cg-task-scripts.html">
+<link rel="import" href="cg-task-listener-behavior.html">
+<link rel="import" href="cg-cssshake.html">
 
 
-<dom-module id="cg-task-manager-notification">
+<dom-module id="cg-task-notification">
     <style>
         :host(.hidden) {
             visibility:hidden;
@@ -65,26 +65,29 @@
         <paper-button id="notifier" on-tap="open" class="hover-stop shake-constant">
             <paper-material elevation="1" class="counts-wrap">
                 <span class="label">Background tasks</span>
-                <div class="count-wrap scheduled" title="Scheduled"><paper-material class="count" elevation="1">[[tasks.scheduled.length]]</paper-material></div>
-                <div class="count-wrap running" title="Running"><paper-material class="count" elevation="1">[[tasks.running.length]]</paper-material></div>
-                <div class="count-wrap success" title="Success"><paper-material class="count" elevation="1">[[tasks.success.length]]</paper-material></div>
-                <div class="count-wrap failed" title="Failed"><paper-material class="count" elevation="1">[[tasks.error.length]]</paper-material></div>
-                <div class="count-wrap canceled" title="Canceled"><paper-material class="count" elevation="1">[[tasks.canceled.length]]</paper-material></div>
+                <div class="count-wrap scheduled" title="Scheduled"><paper-material class="count" elevation="1">[[scheduled.length]]</paper-material></div>
+                <div class="count-wrap running" title="Running"><paper-material class="count" elevation="1">[[running.length]]</paper-material></div>
+                <div class="count-wrap success" title="Success"><paper-material class="count" elevation="1">[[success.length]]</paper-material></div>
+                <div class="count-wrap failed" title="Failed"><paper-material class="count" elevation="1">[[failed.length]]</paper-material></div>
+                <div class="count-wrap canceled" title="Canceled"><paper-material class="count" elevation="1">[[canceled.length]]</paper-material></div>
             </paper-material>
         </paper-button>
     </template>
     <script>
         Polymer({
-            is:"cg-task-manager-notification",
-            behaviors:[CG.BaseBehavior, CG.TaskManagerBehavior],
+            is:"cg-task-notification",
+            behaviors:[CG.BaseBehavior, CG.TaskListenerBehavior],
             ready:function(){
                 this.toggleClass("hidden", true);
             },
-            onTaskSizeChanged:function(tasks){
-                var visible = tasks.scheduled.length != 0
-                        || tasks.running.length != 0
-                        || tasks.error.length != 0
-                        || tasks.canceled.length != 0;
+            onTaskChanged:function(task, path, value, tasksAccessors, splice){
+                splice && this.checkVisibility();
+            },
+            checkVisibility:function(){
+                var visible = this.scheduled.length != 0
+                        || this.running.length != 0
+                        || this.failed.length != 0
+                        || this.canceled.length != 0;
                 if(visible) {
                     if(!this.$.notifier.classList.contains("shake")) {
                         this.toggleClass("hidden", false);
@@ -98,7 +101,7 @@
                 }
             },
             open:function(){
-                this.fireTasksEvent("open-viewer");
+                this.fireDocument("cg-tasks", "open-viewer");
             }
         });
     </script>

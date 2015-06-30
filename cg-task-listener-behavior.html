@@ -1,0 +1,52 @@
+<link rel="import" href="../cg-behaviors/cg-base-behavior.html">
+<link rel="import" href="../cg-behaviors/cg-document-event-behavior.html">
+
+<script>
+    var CGTaskListenerBehavior = {
+        properties:{
+            scheduled:Array,
+            running:Array,
+            success:Array,
+            failed:Array,
+            canceled:Array
+        },
+        ready:function(){
+            this.listensTo("cg-tasks", this._onTasksEvent);
+        },
+        _onTasksEvent:function(type, event, e){
+            switch(type){
+                case "state-changed":
+                    return this.onTaskStateChanged(event.params.task, event.params.state, event.params.accessors);
+                case "progress-changed":
+                    return this.onTaskProgressChanged(event.params.task, event.params.progress, event.params.accessors);
+                case "length-changed":
+                    return this.onTaskSizeChanged(null, null, event.params.accessors);
+                default:
+                    return this.onTasksEvent(type, event, e);
+            }
+        },
+        onTaskProgressChanged:function(task, value, tasksAccessors){
+            this.notifyPath(task.state + "." + this.running.indexOf(task) + "._progress", value);
+            this.onTaskChanged(task, "_progress", value, tasksAccessors, false);
+        },
+        onTaskStateChanged:function(task, value, tasksAccessors){
+            this.scheduled = tasksAccessors.scheduled();
+            this.running = tasksAccessors.running();
+            this.success = tasksAccessors.success();
+            this.failed = tasksAccessors.failed();
+            this.canceled = tasksAccessors.canceled();
+            this.onTaskChanged(task, "_state", value, tasksAccessors, true);
+        },
+        onTaskSizeChanged:function(task, path, tasksAccessors){
+            this.scheduled = tasksAccessors.scheduled();
+            this.running = tasksAccessors.running();
+            this.success = tasksAccessors.success();
+            this.failed = tasksAccessors.failed();
+            this.canceled = tasksAccessors.canceled();
+            this.onTaskChanged(task, "length", null, tasksAccessors, true);
+        },
+        onTaskChanged:function(task, path, value, tasksAccessors, splice){},
+        onTasksEvent:function(type, event, e){},
+    };
+    CG.TaskListenerBehavior = [CG.BaseBehavior, CGTaskListenerBehavior, CG.DocumentEventBehavior];
+</script>

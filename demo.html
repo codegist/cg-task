@@ -4,22 +4,20 @@
     <meta name="viewport" content="width=device-width, user-scalable=no">
     <script src="../webcomponentsjs/webcomponents-lite.js"></script>
     <link rel="import" href="../cg-polymer-patches/cg-polymer-patches.html">
-    <link rel="import" href="cg-task-manager-dialog.html">
-    <link rel="import" href="cg-task-manager-notification.html">
+    <link rel="import" href="cg-task-manager.html">
+    <link rel="import" href="cg-task-viewer.html">
+    <link rel="import" href="cg-task-dialog.html">
+    <link rel="import" href="cg-task-notification.html">
 </head>
 <body>
 
 <template is="dom-bind" id="sandbox">
     <button on-tap="generateTask">generate task</button>
     <button on-tap="openDialog">open dialog</button>
-    <cg-task-manager-dialog id="dialog"></cg-task-manager-dialog>
-    <cg-task-manager-notification id="sdialog"></cg-task-manager-notification>
-    <cg-task-manager-notification id="sdialog"></cg-task-manager-notification>
-    <cg-task-manager-notification id="sdialog"></cg-task-manager-notification>
-    <cg-task-manager-notification id="sdialog"></cg-task-manager-notification>
-    <cg-task-manager-notification id="sdialog"></cg-task-manager-notification>
-    <cg-task-manager-notification id="sdialog"></cg-task-manager-notification>
-    <cg-task-manager-notification id="sdialog"></cg-task-manager-notification>
+    <cg-task-manager id="manager"></cg-task-manager>
+    <cg-task-viewer></cg-task-viewer>
+    <cg-task-dialog id="dialog"></cg-task-dialog>
+    <cg-task-notification></cg-task-notification>
 </template>
 
 <script>
@@ -32,13 +30,13 @@
                 var progress = 0;
                 console.log("interval", parseInt(schedule));
                 var interval = setInterval(function () {
-                    if (progress > 100 || task.canceled) {
+                    if (progress > 100 || task.state == "canceled") {
                         clearInterval(interval);
-                        if(!task.canceled) {
+                        if(task.state != "canceled") {
                             if (Math.random() >= .2) {
                                 task.success(134);
                             } else {
-                                task.error("wow");
+                                task.fail("wow");
                             }
                         }
                         return;
@@ -53,12 +51,13 @@
         };
         sandbox.generateTask = function(){
 
-            var tasks = sandbox.$.dialog.$.manager.getTasks(), dependsOn;
+            var tasks = sandbox.$.manager.tasks, dependsOn;
             if(Math.random() < .5 && tasks.length > 0) {
                 dependsOn = tasks[parseInt(Math.random() * tasks.length)];
             }
 
-            sandbox.$.dialog.fireTasksEvent("schedule-task", new CG.Task("Something important "+tasks.length, task(20 + Math.random()*50), [1,2,4], window, function(event, data){
+            sandbox.$.manager.scheduleTask(new CG.Task("Something important "+tasks.length, task(20 + Math.random()*50), [1,2,4], window, function(event, data){
+//            sandbox.$.dialog.fireTasksEvent("schedule-task", new CG.Task("Something important "+tasks.length, task(20 + Math.random()*50), [1,2,4], window, function(event, data){
             //    console.log("MyCallback1", event, "data", JSON.stringify(data))
             }, dependsOn));
         };

@@ -1,64 +1,77 @@
 <link rel="import" href="../cg-utils/cg.html">
-<link rel="stylesheet" href="../csshake/csshake.min.css" media="all">
 
 <script>
     CG.Task = function(desc, jobFn, jobArgs, jobScope, callback, dependsOn){
         this._id = CG.Utils.Generators.id();
-        this._desc = desc;
         this._listeners = [];
         this._jobFn = jobFn;
         this._jobArgs = [this].concat(Array.prototype.slice.call(jobArgs || []));
         this._jobScope = jobScope;
         callback && this.addListener(callback);
         this.dependsOn = dependsOn;
+        this.desc = desc;
         this.reset();
     };
     CG.Task.prototype = {
         _id:null,
-        dependsOn:null,
         _jobFn:null,
         _jobArgs:null,
         _jobScope:null,
         _listeners:null,
-        info:null,
-        _manager:null,
-        exec:function(callback){
-            var execCallback = function(event, data, task){
-                (event == "finished") &&  this._listeners.splice(this._listeners.indexOf(execCallback), 1);
-                callback(event, data, task);
-            }.bind(this);
-            this.addListener(execCallback);
-            this._on("start", {task:this});
+
+        _progress:null,
+
+        error:null,
+        state:null,
+        desc:null,
+        data:null,
+        dependsOn:null,
+
+        exec:function(){
+            this.start();
             try {
                 this._jobFn.apply(this._jobScope, this._jobArgs);
             }catch(e){
-                this.error(e);
+                this.fail(e);
             }
         },
-        setManager:function(manager){
-            this._manager = manager;
+        reset:function(){
+            this.data = null;
+            this.error = null;
+            this._progress = null;
+            this.state = "scheduled";
         },
         retry:function(){
-            this._manager.retry(this);
+            this.reset();
+            this._on("retry", {task:this});
         },
         discard:function(){
-            this._manager.discard(this);
-            this._on("finished", {success:false, discarded:true});
+            this.state = "discarded";
+            this._on("finished", {task:this, success:false, discarded:true});
         },
-        cancel:function(discard){
-            discard ? this.discard() : this._manager.cancel(this);
-            this.info.canceled = true;
-            this._on("finished", {success:false, canceled:true});
+        cancel:function(){
+            this.state = "canceled";
+            this._on("finished", {task:this, success:false, canceled:true});
         },
         progress:function(progress){
-            this._on("progress", {progress:progress});
+            var different = this._progress != progress;
+            this._progress = progress;
+            different && this._on("progress", {task:this, progress:progress});
         },
         success:function(data){
+            this.state = "success";
+            this.data = data;
             this.progress(100);
-            this._on("finished", {success:true, data:data});
+            this._on("finished", {task:this, success:true, data:data});
         },
-        error:function(error){
-            this._on("finished", {success:false, error:error});
+        fail:function(error){
+            this.state = "failed";
+            this.error = error;
+            this._on("finished", {task:this, success:false, error:error});
+        },
+        start:function(){
+            this.state = "running";
+            this._on("start", {task:this});
         },
         _on:function(event, data){
             for(var i = 0; i < this._listeners.length; i ++){
@@ -70,20 +83,8 @@
         addListener:function(callback){
             this._listeners.push(callback);
         },
-        reset:function(){
-            this.info = {
-                desc : this._desc,
-                progress : 0,
-                finished : false,
-                success : false,
-                canceled : false,
-                discarded: false,
-                data : null,
-                error : null,
-            };
-        },
         toString:function(){
-            return "[Task@"+this._id+", desc:"+this.info.desc+"]";
+            return "[Task@"+this._id+", desc:"+this.desc+"]";
         }
     };
 </script>

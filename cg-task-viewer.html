@@ -1,0 +1,219 @@
+<link rel="import" href="../cg-behaviors/cg-base-behavior.html">
+<link rel="import" href="../iron-flex-layout/classes/iron-flex-layout.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../paper-styles/paper-styles.html">
+<link rel="import" href="../paper-tabs/paper-tabs.html">
+<link rel="import" href="../paper-tabs/paper-tab.html">
+<link rel="import" href="../paper-material/paper-material.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../iron-pages/iron-pages.html">
+<link rel="import" href="../font-awesome-polymer-icons/fa-icons.html">
+<link rel="import" href="cg-task-listener-behavior.html">
+
+<dom-module id="cg-task-viewer-item">
+    <style>
+        .item-wrapper {
+            @apply(--paper-font-caption);
+            color:var(--paper-grey-800);
+        }
+        .item-wrapper .progressbar{
+            height:10px;
+            background-color: #A7ACE5;
+            border-radius: 5px;
+        }
+        .item-wrapper .progress-percent{
+            width:30px;
+            margin-left:5px;
+            margin-right:5px;
+        }
+        .item-wrapper .task {
+            margin:10px;
+        }
+        .item-wrapper .desc {
+            margin-right:10px;
+        }
+
+        .item-wrapper .discard ::content .content,
+        .item-wrapper .cancel ::content .content,
+        .item-wrapper .retry ::content .content{
+            padding:0px;
+        }
+
+        .item-wrapper .discard ::content iron-icon ,
+        .item-wrapper .cancel ::content iron-icon ,
+        .item-wrapper .retry ::content iron-icon,
+        .item-wrapper .success-icon ,
+        .item-wrapper .error-icon {
+            margin: 5px;
+            width: 16px;
+            height: 16px;
+        }
+
+        .item-wrapper .discard ::content iron-icon,
+        .item-wrapper .retry ::content iron-icon,
+        .item-wrapper .success-icon {
+            color:var(--paper-green-800);
+        }
+
+        .item-wrapper .error-icon {
+            color:var(--paper-red-800);
+        }
+
+        .item-wrapper .cancel ::content iron-icon {
+            color:var(--paper-deep-orange-800);
+        }
+        .item-wrapper {
+            height:200px;
+            overflow:auto!important;
+        }
+    </style>
+    <template>
+        <div class="item-wrapper">
+            <template is="dom-repeat" items="[[tasks]]">
+                <div class="task layout horizontal wrap">
+                    <div class="layout horizontal center-justified center desc">
+                        <span>[[item.desc]]</span>
+                        <template is="dom-if" if="[[isDefined(item.dependsOn)]]">
+                            <span>&nbsp;(depends on</span><span>[[item.dependsOn.desc]]</span><span>)</span>
+                        </template>
+                    </div>
+                    <div class="progressbar-wrapper layout flex self-center">
+                        <paper-material class="progressbar" elevation="1" style$="[[concat('width:', item._progress, '%;')]]"></paper-material>
+                    </div>
+                    <div class="progress-percent self-center" hidden$="[[equals(item._progress, 0)]]">[[_displayProgress(item._progress)]]</div>
+                    <div hidden$="[[!equalsToAny(item.state, 'running', 'scheduled')]]">
+                        <paper-button class="cancel" on-tap="cancel">
+                            <iron-icon icon="fa:minus-circle"></iron-icon>
+                            cancel
+                        </paper-button>
+                    </div>
+                    <div class="error-wrapper layout horizontal center-justified center" hidden$="[[!hasErrors(item.state, item.error)]]">
+                        <iron-icon class="error-icon" icon="fa:exclamation-triangle"></iron-icon>
+                        <span class="error-label" hidden$="[[equals(item.state, 'canceled')]]">Failed</span>
+                        <span class="error" hidden$="[[notEquals(item.state, 'canceled')]]">Cancelled by user</span>
+                        <div>
+                            <paper-button class="retry" on-tap="retry">
+                                <iron-icon icon="fa:repeat"></iron-icon>
+                                retry
+                            </paper-button>
+                        </div>
+                    </div>
+                    <div hidden$="[[notEquals(item.state, 'success')]]">
+                        <iron-icon class="success-icon" icon="fa:check-circle-o"></iron-icon>
+                        <span class="success">Completed</span>
+                    </div>
+                    <div hidden$="[[equals(item.state, 'running')]]">
+                        <paper-button class="discard" on-tap="discard">
+                            <iron-icon icon="fa:minus-circle"></iron-icon>
+                            discard
+                        </paper-button>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is:"cg-task-viewer-item",
+            properties:{
+                tasks:Array,
+                type:{
+                    type:String,
+                    reflectToAttribute:true
+                }
+            },
+            behaviors:[CG.BaseBehavior],
+            hasErrors:function(state, error){
+                return state == "canceled"  || (this.isDefined(error));
+            },
+            _displayProgress:function(progress) {
+                return Math.round(progress) + "%";
+            },
+            retry:function(e){
+                 e.model.item.retry();
+            },
+            discard:function(e){
+                e.model.item.discard();
+            },
+            cancel:function(e){
+                e.model.item.cancel();
+            }
+        });
+    </script>
+</dom-module>
+
+<dom-module id="cg-task-viewer">
+    <style>
+        .tasks-wrapper {
+            @apply(--paper-font-body1);
+        }
+        .tasks-wrapper .title {
+            margin-right:10px;
+        }
+        .tasks-wrapper .count-wrap {
+            margin:5px;
+        }
+        .tasks-wrapper .count {
+            @apply(--layout-horizontal);
+            @apply(--layout-center);
+            @apply(--layout-center-justified);
+            @apply(--paper-font-button);
+
+            border-radius: 50%;
+            width:30px;
+            height:30px;
+            color:white;
+        }
+
+        .tasks-wrapper [type=scheduled] ::content .progressbar,
+        .tasks-wrapper [type=scheduled] .count {
+            background-color:var(--paper-blue-200);
+        }
+        .tasks-wrapper [type=running] ::content .progressbar,
+        .tasks-wrapper [type=running] .count {
+            background-color:var(--paper-blue-800);
+        }
+        .tasks-wrapper [type=success] ::content .progressbar,
+        .tasks-wrapper [type=success] .count {
+            background-color:var(--paper-green-800);
+        }
+        .tasks-wrapper [type=failed] ::content .progressbar,
+        .tasks-wrapper [type=failed] .count {
+            background-color:var(--paper-red-800);
+        }
+        .tasks-wrapper [type=canceled] ::content .progressbar,
+        .tasks-wrapper [type=canceled] .count {
+            background-color:var(--paper-grey-800);
+        }
+    </style>
+    <template>
+        <div class="tasks-wrapper">
+            <paper-tabs selected="{{selected}}" noink no-slide>
+                <paper-tab type="scheduled"><span class="title">Scheduled</span><div class="count-wrap"><paper-material class="count" elevation="1">[[scheduled.length]]</paper-material></div></paper-tab>
+                <paper-tab type="running"><span class="title">Running</span><div class="count-wrap"><paper-material class="count" elevation="1">[[running.length]]</paper-material></div></paper-tab>
+                <paper-tab type="success"><span class="title">Completed</span><div class="count-wrap"><paper-material class="count" elevation="1">[[success.length]]</paper-material></div></paper-tab>
+                <paper-tab type="failed"><span class="title">Failed</span><div class="count-wrap"><paper-material class="count" elevation="1">[[failed.length]]</paper-material></div></paper-tab>
+                <paper-tab type="canceled"><span class="title">Canceled</span><div class="count-wrap"><paper-material class="count" elevation="1">[[canceled.length]]</paper-material></div></paper-tab>
+            </paper-tabs>
+            <iron-pages selected="{{selected}}">
+                <cg-task-viewer-item type="scheduled" tasks="[[scheduled]]"></cg-task-viewer-item>
+                <cg-task-viewer-item type="running" tasks="[[running]]"></cg-task-viewer-item>
+                <cg-task-viewer-item type="success" tasks="[[success]]"></cg-task-viewer-item>
+                <cg-task-viewer-item type="failed" tasks="[[failed]]"></cg-task-viewer-item>
+                <cg-task-viewer-item type="canceled" tasks="[[canceled]]"></cg-task-viewer-item>
+            </iron-pages>
+        </div>
+    </template>
+</dom-module>
+<script>
+    Polymer({
+        is:'cg-task-viewer',
+        properties:{
+            selected:{
+                value:0
+            },
+        },
+        behaviors:[CG.BaseBehavior, CG.TaskListenerBehavior],
+    });
+</script>
